@@ -1,0 +1,53 @@
+/** Shrinks a photo so the saved state stays small. Returns a JPEG data URL. */
+export function fileToSmallDataUrl(file: File, max = 360): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        reject(new Error("no canvas"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("bad image"));
+    };
+    img.src = url;
+  });
+}
+
+const LOCALES = { ru: "ru-RU", it: "it-IT", en: "en-GB" } as const;
+
+export function formatDateTime(ms: number, lang: keyof typeof LOCALES): string {
+  return new Date(ms).toLocaleString(LOCALES[lang], {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function csvCell(v: string | number | undefined): string {
+  const s = v === undefined ? "" : String(v);
+  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/** Common routine pictures for the icon picker. */
+export const EMOJIS = [
+  "🪥", "🚿", "🛁", "🧼", "👕", "🧦", "👟", "🧥", "🥣", "🍎", "🥛", "🍽️",
+  "🎒", "📚", "✏️", "🏫", "🚌", "🚪", "🗝️", "🧸", "🧩", "🎨", "🎵", "📖",
+  "🛏️", "🌙", "🧹", "🪣", "🐕", "🌳", "🚲", "⚽", "📺", "🎮", "🍪", "🍦",
+  "🧃", "💊", "🧴", "🚽", "🧻", "💤", "☀️", "🏠", "🛒", "👋", "🤗", "⭐",
+];
